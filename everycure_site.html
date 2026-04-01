@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniCure — Drug Repurposing Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:       #0f1a14;
+    --ink-mid:   #3a4a3f;
+    --ink-soft:  #6b7d72;
+    --paper:     #f5f2eb;
+    --paper-alt: #ede9e0;
+    --rule:      #d4cfc4;
+    --teal:      #1a6b5a;
+    --teal-lt:   #e4f0ec;
+    --teal-mid:  #2e8b72;
+    --amber:     #b8620a;
+    --amber-lt:  #fdf0e2;
+    --coral:     #c0392b;
+    --coral-lt:  #fcecea;
+    --score-3:   #1a6b5a;
+    --score-2:   #2e7d9b;
+    --score-1:   #6b5a8a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* ── TOP RULE ── */
+  .top-rule {
+    height: 4px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-mid) 40%, var(--amber) 100%);
+  }
+
+  /* ── NAV ── */
+  nav {
+    border-bottom: 1px solid var(--rule);
+    padding: 0 clamp(1.5rem, 5vw, 5rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    background: var(--paper);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--teal);
+    text-transform: uppercase;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--teal); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: clamp(4rem, 10vw, 8rem) clamp(1.5rem, 5vw, 5rem) clamp(3rem, 6vw, 5rem);
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .hero-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 2px;
+    background: var(--teal);
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--teal);
+  }
+  .hero-body {
+    font-size: 1.05rem;
+    color: var(--ink-mid);
+    max-width: 480px;
+    margin-bottom: 2rem;
+  }
+  .stat-row {
+    display: flex;
+    gap: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .stat { display: flex; flex-direction: column; gap: 0.15rem; }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--teal);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── HERO VISUAL ── */
+  .hero-visual {
+    background: var(--paper-alt);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-visual::before {
+    content: 'LIVE OUTPUT';
+    position: absolute;
+    top: 0; right: 0;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    background: var(--teal);
+    color: white;
+    padding: 3px 10px;
+    border-bottom-left-radius: 6px;
+  }
+  .mono-line { line-height: 1.9; color: var(--ink-mid); }
+  .mono-key { color: var(--ink-soft); }
+  .mono-val-drug { color: var(--teal); font-weight: 500; }
+  .mono-val-disease { color: var(--amber); }
+  .mono-val-target { color: var(--score-1); }
+  .mono-score { color: var(--coral); }
+  .mono-rule { border: none; border-top: 1px solid var(--rule); margin: 0.75rem 0; }
+  .fade-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, var(--paper-alt));
+    pointer-events: none;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  .section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 5rem);
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.75rem;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+  }
+  .section-intro {
+    font-size: 1.05rem;
+    color: var(--ink-mid);
+    max-width: 640px;
+    margin-bottom: 3rem;
+  }
+  hr.section-rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin-bottom: 3rem;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-band {
+    background: var(--ink);
+    color: var(--paper);
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 5rem);
+  }
+  .how-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .how-band .section-label { color: var(--teal-mid); }
+  .how-band h2 { color: var(--paper); margin-bottom: 3rem; }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2px;
+  }
+  .step {
+    background: #1a2420;
+    padding: 2rem;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .step:hover { background: #212e29; }
+  .step-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3.5rem;
+    line-height: 1;
+    color: var(--teal-mid);
+    opacity: 0.4;
+    margin-bottom: 1rem;
+  }
+  .step-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--paper);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+  }
+  .step-body {
+    font-size: 14px;
+    color: #8a9e96;
+    line-height: 1.65;
+  }
+  .step-body code {
+    font-family: 'DM Mono', monospace;
+    font-size: 11.5px;
+    background: #0f1a14;
+    color: var(--teal-mid);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .arrow-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--teal-mid);
+    font-size: 1.2rem;
+    background: #141f1a;
+    padding: 2rem 0.5rem;
+  }
+
+  /* ── EXAMPLE CARDS ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .card:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card:nth-child(2) { animation-delay: 0.08s; }
+  .card:nth-child(3) { animation-delay: 0.16s; }
+  .card:nth-child(4) { animation-delay: 0.24s; }
+  .card:nth-child(5) { animation-delay: 0.32s; }
+  .card:nth-child(6) { animation-delay: 0.40s; }
+
+  .card-header {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--paper-alt);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .card-drug {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .score-badge {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: white;
+  }
+  .score-3 { background: var(--score-3); }
+  .score-2 { background: var(--score-2); }
+  .score-1 { background: var(--score-1); }
+
+  .card-body { padding: 1rem 1.25rem; }
+  .card-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 13.5px;
+    align-items: baseline;
+  }
+  .card-row-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    min-width: 90px;
+    letter-spacing: 0.03em;
+    padding-top: 1px;
+  }
+  .card-row-val { color: var(--ink-mid); }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .pill-teal { background: var(--teal-lt); color: var(--teal); }
+  .pill-amber { background: var(--amber-lt); color: var(--amber); }
+
+  .card-explanation {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--paper-alt);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+    border-left: 3px solid var(--teal);
+  }
+
+  /* ── DATA TABLES ── */
+  .data-section {
+    background: var(--paper-alt);
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 5rem);
+  }
+  .data-inner { max-width: 1100px; margin: 0 auto; }
+  .tables-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+  .data-table-wrap h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--ink);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+  }
+  thead th {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.65rem 1rem;
+    text-align: left;
+  }
+  tbody tr { border-bottom: 1px solid var(--paper-alt); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafaf8; }
+  tbody td { padding: 0.6rem 1rem; color: var(--ink-mid); }
+  tbody td:first-child { color: var(--ink); font-weight: 500; }
+  .tag {
+    display: inline-block;
+    background: var(--teal-lt);
+    color: var(--teal);
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 3px;
+    margin: 1px 2px 1px 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 2rem clamp(1.5rem, 5vw, 5rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+  }
+  .footer-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+    max-width: 480px;
+    text-align: right;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; gap: 2.5rem; }
+    .hero-visual { display: none; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .arrow-connector { display: none; }
+    .footer-note { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-rule"></div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">MiniCure</span>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#data">Data</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="hero-label">Drug Repurposing System</div>
+    <h1>Old drugs,<br><em>new cures.</em></h1>
+    <p class="hero-body">
+      MiniCure is an EveryCure-style system that scans existing approved drugs
+      and asks: could this drug — already proven safe in humans — treat a disease
+      it was never designed for? It finds answers by following shared biological targets.
+    </p>
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-num">6</span>
+        <span class="stat-label">Drugs tracked</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">22</span>
+        <span class="stat-label">Candidate pairs</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">10</span>
+        <span class="stat-label">Biological targets</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="mono-line"><span class="mono-key">drug         </span> <span class="mono-val-drug">Imatinib</span></div>
+    <div class="mono-line"><span class="mono-key">approved for </span> <span class="mono-val-disease">Chronic Myeloid Leukemia</span></div>
+    <div class="mono-line"><span class="mono-key">may treat    </span> <span class="mono-val-disease">Gastrointestinal Stromal Tumor</span></div>
+    <div class="mono-line"><span class="mono-key">via targets  </span> <span class="mono-val-target">BCR-ABL, PDGFR, KIT</span></div>
+    <div class="mono-line"><span class="mono-key">score        </span> <span class="mono-score">3</span> &nbsp;<span style="color:#4a6055;font-size:11px;">★★★ strongest match</span></div>
+    <hr class="mono-rule">
+    <div class="mono-line"><span class="mono-key">drug         </span> <span class="mono-val-drug">Metformin</span></div>
+    <div class="mono-line"><span class="mono-key">approved for </span> <span class="mono-val-disease">Type 2 Diabetes</span></div>
+    <div class="mono-line"><span class="mono-key">may treat    </span> <span class="mono-val-disease">Cancer</span></div>
+    <div class="mono-line"><span class="mono-key">via targets  </span> <span class="mono-val-target">AMPK, mTOR</span></div>
+    <div class="mono-line"><span class="mono-key">score        </span> <span class="mono-score">2</span></div>
+    <hr class="mono-rule">
+    <div class="mono-line"><span class="mono-key">drug         </span> <span class="mono-val-drug">Tocilizumab</span></div>
+    <div class="mono-line"><span class="mono-key">approved for </span> <span class="mono-val-disease">Rheumatoid Arthritis</span></div>
+    <div class="mono-line"><span class="mono-key">may treat    </span> <span class="mono-val-disease">Cytokine Storm Syndrome</span></div>
+    <div class="mono-line"><span class="mono-key">via targets  </span> <span class="mono-val-target">IL-6 Receptor</span></div>
+    <div class="mono-line"><span class="mono-key">score        </span> <span class="mono-score">1</span></div>
+    <div class="fade-bottom"></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="how-band" id="how-it-works">
+  <div class="how-inner">
+    <div class="section-label">The method</div>
+    <h2>How MiniCure finds matches</h2>
+    <div class="steps-grid">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Store the drugs</div>
+        <div class="step-body">
+          Each drug is stored with its approved disease in a Python dictionary —
+          like a lookup table. Example: <code>Metformin → Type 2 Diabetes</code>.
+        </div>
+      </div>
+
+      <div class="arrow-connector">→</div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Map the targets</div>
+        <div class="step-body">
+          A second dictionary records which biological targets (proteins and
+          enzymes) each drug affects. Example: <code>Metformin → [AMPK, mTOR]</code>.
+        </div>
+      </div>
+
+      <div class="arrow-connector">→</div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Link targets to diseases</div>
+        <div class="step-body">
+          A third dictionary links each target to diseases that involve it.
+          Example: <code>AMPK → [Cancer, Alzheimer's, Aging]</code>.
+          This comes from research.
+        </div>
+      </div>
+
+      <div class="arrow-connector">→</div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Follow the chain</div>
+        <div class="step-body">
+          The engine hops from drug → target → disease. If the destination
+          disease is not the drug's approved use, it's a repurposing candidate.
+          More shared targets = higher score.
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top: 3rem; padding: 1.75rem 2rem; background: #1a2420; border-left: 3px solid var(--teal-mid); border-radius: 4px; max-width: 700px;">
+      <div style="font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--teal-mid); margin-bottom:0.6rem;">WHY THIS MATTERS</div>
+      <p style="font-size:14px; color:#8a9e96; line-height:1.7;">
+        Testing a brand-new drug from scratch takes 10–15 years and over $1 billion.
+        A repurposed drug skips most of that — it is already proven safe in humans.
+        Systems like this help researchers identify promising candidates much faster,
+        especially for rare diseases where dedicated research funding is scarce.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<section class="section" id="results">
+  <div class="section-label">System output</div>
+  <h2>Repurposing candidates</h2>
+  <p class="section-intro">
+    Each card shows one drug-disease match. The score circle shows how many
+    biological targets connect the drug to the new disease — higher is stronger evidence.
+  </p>
+  <hr class="section-rule">
+
+  <div class="cards-grid">
+
+    <!-- Imatinib → GIST (score 3) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-drug">Imatinib</div>
+        <div class="score-badge score-3" title="Score: 3 shared targets">3</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-row-key">Approved for</span>
+          <span class="card-row-val"><span class="pill pill-amber">Chronic Myeloid Leukemia</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">May treat</span>
+          <span class="card-row-val"><span class="pill pill-teal">Gastrointestinal Stromal Tumor</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">Via targets</span>
+          <span class="card-row-val">BCR-ABL, PDGFR, KIT</span>
+        </div>
+        <div class="card-explanation">
+          Imatinib may help treat Gastrointestinal Stromal Tumor because both are connected to BCR-ABL, PDGFR, and KIT. <strong>This repurposing actually happened</strong> — Imatinib (Gleevec) is now FDA-approved for GIST.
+        </div>
+      </div>
+    </div>
+
+    <!-- Metformin → Cancer (score 2) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-drug">Metformin</div>
+        <div class="score-badge score-2" title="Score: 2 shared targets">2</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-row-key">Approved for</span>
+          <span class="card-row-val"><span class="pill pill-amber">Type 2 Diabetes</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">May treat</span>
+          <span class="card-row-val"><span class="pill pill-teal">Cancer</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">Via targets</span>
+          <span class="card-row-val">AMPK, mTOR</span>
+        </div>
+        <div class="card-explanation">
+          Metformin may help treat Cancer because both are connected to AMPK and mTOR. Multiple cancer clinical trials for Metformin are currently active.
+        </div>
+      </div>
+    </div>
+
+    <!-- Rapamycin → Cancer (score 2) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-drug">Rapamycin</div>
+        <div class="score-badge score-2" title="Score: 2 shared targets">2</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-row-key">Approved for</span>
+          <span class="card-row-val"><span class="pill pill-amber">Organ Transplant Rejection</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">May treat</span>
+          <span class="card-row-val"><span class="pill pill-teal">Cancer</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">Via targets</span>
+          <span class="card-row-val">mTOR, PI3K</span>
+        </div>
+        <div class="card-explanation">
+          Rapamycin may help treat Cancer because both are connected to mTOR and PI3K. mTOR inhibition is a well-studied anti-cancer strategy.
+        </div>
+      </div>
+    </div>
+
+    <!-- Dexamethasone → Asthma (score 2) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-drug">Dexamethasone</div>
+        <div class="score-badge score-2" title="Score: 2 shared targets">2</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-row-key">Approved for</span>
+          <span class="card-row-val"><span class="pill pill-amber">Inflammatory Conditions</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">May treat</span>
+          <span class="card-row-val"><span class="pill pill-teal">Asthma</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">Via targets</span>
+          <span class="card-row-val">Glucocorticoid Receptor, NF-kB</span>
+        </div>
+        <div class="card-explanation">
+          Dexamethasone may help treat Asthma because both are connected to the Glucocorticoid Receptor and NF-kB. Dexamethasone is in fact used clinically for severe asthma attacks.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tocilizumab → Cytokine Storm (score 1) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-drug">Tocilizumab</div>
+        <div class="score-badge score-1" title="Score: 1 shared target">1</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-row-key">Approved for</span>
+          <span class="card-row-val"><span class="pill pill-amber">Rheumatoid Arthritis</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">May treat</span>
+          <span class="card-row-val"><span class="pill pill-teal">Cytokine Storm Syndrome</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">Via targets</span>
+          <span class="card-row-val">IL-6 Receptor</span>
+        </div>
+        <div class="card-explanation">
+          Tocilizumab may help treat Cytokine Storm Syndrome because both are connected to the IL-6 Receptor. This was used during COVID-19 for exactly this reason.
+        </div>
+      </div>
+    </div>
+
+    <!-- Metformin → Alzheimer's (score 1) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-drug">Metformin</div>
+        <div class="score-badge score-1" title="Score: 1 shared target">1</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-row-key">Approved for</span>
+          <span class="card-row-val"><span class="pill pill-amber">Type 2 Diabetes</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">May treat</span>
+          <span class="card-row-val"><span class="pill pill-teal">Alzheimer's Disease</span></span>
+        </div>
+        <div class="card-row">
+          <span class="card-row-key">Via targets</span>
+          <span class="card-row-val">AMPK</span>
+        </div>
+        <div class="card-explanation">
+          Metformin may help treat Alzheimer's Disease because both are connected to AMPK. AMPK plays a role in neuronal energy regulation and is an active research area.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- DATA TABLES -->
+<div class="data-section" id="data">
+  <div class="data-inner">
+    <div class="section-label">The knowledge base</div>
+    <h2>What the system knows</h2>
+    <p class="section-intro" style="margin-bottom:2.5rem;">
+      All the intelligence in MiniCure lives in three simple dictionaries.
+      Adding a new drug, target, or disease is as easy as adding one line to the right table.
+    </p>
+    <div class="tables-row">
+
+      <div class="data-table-wrap">
+        <h3>Drugs &amp; approved uses</h3>
+        <table>
+          <thead><tr><th>Drug</th><th>Approved for</th></tr></thead>
+          <tbody>
+            <tr><td>Metformin</td><td>Type 2 Diabetes</td></tr>
+            <tr><td>Rapamycin</td><td>Organ Transplant Rejection</td></tr>
+            <tr><td>Imatinib</td><td>Chronic Myeloid Leukemia</td></tr>
+            <tr><td>Dexamethasone</td><td>Inflammatory Conditions</td></tr>
+            <tr><td>Simvastatin</td><td>High Cholesterol</td></tr>
+            <tr><td>Tocilizumab</td><td>Rheumatoid Arthritis</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="data-table-wrap">
+        <h3>Drugs &amp; biological targets</h3>
+        <table>
+          <thead><tr><th>Drug</th><th>Targets</th></tr></thead>
+          <tbody>
+            <tr><td>Metformin</td><td><span class="tag">AMPK</span><span class="tag">mTOR</span></td></tr>
+            <tr><td>Rapamycin</td><td><span class="tag">mTOR</span><span class="tag">PI3K</span></td></tr>
+            <tr><td>Imatinib</td><td><span class="tag">BCR-ABL</span><span class="tag">PDGFR</span><span class="tag">KIT</span></td></tr>
+            <tr><td>Dexamethasone</td><td><span class="tag">GR</span><span class="tag">NF-kB</span></td></tr>
+            <tr><td>Simvastatin</td><td><span class="tag">HMG-CoA</span><span class="tag">NF-kB</span></td></tr>
+            <tr><td>Tocilizumab</td><td><span class="tag">IL-6R</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="data-table-wrap">
+        <h3>Targets &amp; linked diseases</h3>
+        <table>
+          <thead><tr><th>Target</th><th>Linked diseases</th></tr></thead>
+          <tbody>
+            <tr><td>AMPK</td><td>Cancer, Alzheimer's, Aging</td></tr>
+            <tr><td>mTOR</td><td>Cancer, Aging, Tuberous Sclerosis</td></tr>
+            <tr><td>PI3K</td><td>Cancer, Autoimmune Disease</td></tr>
+            <tr><td>NF-kB</td><td>IBD, Cancer, Asthma</td></tr>
+            <tr><td>PDGFR</td><td>PAH, GIST</td></tr>
+            <tr><td>IL-6R</td><td>Cytokine Storm, Cancer</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">MINICURE — DRUG REPURPOSING EXPLORER</span>
+  <span class="footer-note">
+    For educational purposes only. Not medical advice.
+    Built with Python dictionaries and the same logic used by real drug repurposing research platforms.
+  </span>
+</footer>
+
+</body>
+</html>
